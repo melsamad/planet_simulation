@@ -11,10 +11,13 @@ pygame.display.set_caption("Miryam's Expanding Solar System Simulation")
 
 back_color = (20, 20, 40) # dark blue color
 yellow = (255, 255, 0)
+blue = (100, 150, 235)
+red = (188, 39, 50)
+mustard_yellow = (225, 173, 1)
+grey = (229, 229, 229)
 
 
 # let's put some planets
-
 class Planet:
 
     AU = 149.6e6 * 1000 # in meters 
@@ -41,7 +44,7 @@ class Planet:
     def draw(self, win): 
         x = self.x * self.SCALE + width / 2
         y = self.y * self.SCALE + height / 2
-        pygame.draw.circle(win, self.color, (x, y), self.radius)
+        pygame.draw.circle(win, self.color, (x, y), self.radius) # how we tell our program to draw a circle
 
 # pygame event loop, only event is moving planets here
 def main():
@@ -51,7 +54,13 @@ def main():
     sun = Planet(0, 0, 40, yellow, 1.98892*10**30, "Sun")
     sun.sun = True
 
-    planets = [sun]
+    mercury = Planet(0.387*Planet.AU, 0, 12, grey, 3.30104*10**23, "Mercury")
+    venus = Planet(-0.72*Planet.AU, 0, 14, mustard_yellow, 4.86732*10**24, "Venus")
+    earth = Planet(-1*Planet.AU, 0, 16, blue, 5.974*10**24, "Earth")
+    mars = Planet(1.52*Planet.AU, 0, 13, red, 6.41693*10**23, "Mars")
+
+
+    planets = [sun, earth, mars, venus, mercury]
 
     while run:
         clock.tick(60) # 60 frames per second
