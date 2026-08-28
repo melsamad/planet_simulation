@@ -1,10 +1,11 @@
 import pygame
 import math
 
+
 pygame.init()
 
 # setting up pygame window
-width, height = 1000, 800
+width, height = 800, 800
 window = pygame.display.set_mode((width, height))
 pygame.display.set_caption("Miryam's Expanding Solar System Simulation")
 
@@ -21,7 +22,7 @@ grey = (229, 229, 229)
 class Planet:
 
     AU = 149.6e6 * 1000 # in meters 
-    G = 6.67428-11 
+    G = 6.67428e-11 
     SCALE = 200 / AU # not sure if my scale is correct yet I'll do the math later
     TIMESTEP = 3600*24 # one day (in seconds)
 
@@ -46,6 +47,47 @@ class Planet:
         y = self.y * self.SCALE + height / 2
         pygame.draw.circle(win, self.color, (x, y), self.radius) # how we tell our program to draw a circle
 
+    def attraction(self, other):
+        other_x, other_y = other.x, other.y
+        distance_x = other_x - self.x
+        distance_y = other_y - self.y
+        distance = math.sqrt(distance_x**2 + distance_y**2)
+
+        if other.sun:
+            self.distance_to_sun = distance
+
+        # calculate force of attraction
+        force = self.G * self.mass * other.mass / distance**2
+
+        # break down force into x & y 
+        theta = math.atan2(distance_y, distance_x)
+        x_force = math.cos(theta) * force
+        y_force = math.sin(theta) * force
+
+        return x_force, y_force
+
+    # make the planets move according to all forces acting upon them
+    def update_position(self, planets, velocities):
+
+        total_fx = total_fy = 0
+        for planet in planets:
+            if self == planet:
+                continue 
+            fx, fy = self.attraction(planet)
+            total_fx += fx
+            total_fy += fy
+
+        # velocity
+        self.x_vel += total_fx / self.mass * self.TIMESTEP 
+        self.y_vel += total_fy / self.mass * self.TIMESTEP
+
+        # distance is updated (v = d / t <=> d = v * t)
+        self.x += self.x_vel * self.TIMESTEP 
+        self.y += self.y_vel * self.TIMESTEP
+        self.orbit.append([self.x, self.y])
+
+
+
 # pygame event loop, only event is moving planets here
 def main():
     run = True
@@ -54,13 +96,22 @@ def main():
     sun = Planet(0, 0, 40, yellow, 1.98892*10**30, "Sun")
     sun.sun = True
 
+    # planets & their velocities
     mercury = Planet(0.387*Planet.AU, 0, 12, grey, 3.30104*10**23, "Mercury")
-    venus = Planet(-0.72*Planet.AU, 0, 14, mustard_yellow, 4.86732*10**24, "Venus")
-    earth = Planet(-1*Planet.AU, 0, 16, blue, 5.974*10**24, "Earth")
-    mars = Planet(1.52*Planet.AU, 0, 13, red, 6.41693*10**23, "Mars")
+    mercury.y_vel = 47.4 * 1000
 
+    venus = Planet(-0.72*Planet.AU, 0, 14, mustard_yellow, 4.86732*10**24, "Venus")
+    venus.y_vel = -35.02 * 1000
+
+    earth = Planet(-1*Planet.AU, 0, 16, blue, 5.974*10**24, "Earth")
+    earth.y_vel = 29.783 * 1000
+
+    mars = Planet(1.52*Planet.AU, 0, 13, red, 6.41693*10**23, "Mars")
+    mars.y_vel = 24.077 * 1000
+   
 
     planets = [sun, earth, mars, venus, mercury]
+    velocities = [0, 47.4 * 1000, -35.02 * 1000, 29.783 * 1000, 24.077 * 1000],
 
     while run:
         clock.tick(60) # 60 frames per second
@@ -71,6 +122,7 @@ def main():
                 run = False
 
         for planet in planets:
+            planet.update_position(planets, velocities)
             planet.draw(window)
 
         pygame.display.update() # takes drawing actions since last update 
