@@ -28,7 +28,7 @@ class Planet:
     AU = 149.6e6 * 1000 # in meters 
     G = 6.67428e-11 
     SCALE = 200 / AU # not sure if my scale is correct yet I'll do the math later
-    TIMESTEP = 3600*24 # one day (in seconds)
+    TIMESTEP = 3600*4 # one day (in seconds)
 
     def __init__(self, x, y, radius, color, mass, name):
         self.x = x
@@ -112,6 +112,9 @@ class Planet:
         self.y += self.y_vel * self.TIMESTEP
         self.orbit.append([self.x, self.y]) # adding a point to orbit list
 
+        if len(self.orbit) > 100 and self.name == 'Moon':
+            self.orbit.pop(0)
+
 
 
 # pygame event loop
@@ -134,9 +137,19 @@ def main():
 
     mars = Planet(1.52*Planet.AU, 0, 13, red, 6.41693*10**23, "Mars")
     mars.y_vel = 24.077 * 1000
-   
 
-    planets = [sun, earth, mars, venus, mercury]
+    # initializing Earth's Moon
+    moon_distance = 0.09 * Planet.AU
+    lunar_orbital_vel = math.sqrt(Planet.G * 5.974*10**24 / moon_distance)
+
+    moon = Planet(-1 * Planet.AU, 0 + moon_distance, 4, grey, 7.342*10**22, "Moon")
+
+    moon.x_vel = lunar_orbital_vel
+    moon.y_vel = 29.783 * 1000
+
+    planets = [sun, earth, mars, venus, mercury, moon]
+
+    sub_setps = 3
 
 
     while run:
@@ -146,6 +159,10 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT: # only event is user quitting the window
                 run = False
+
+        for _ in range(sub_setps):
+            for planet in planets:
+                planet.update_position(planets)
 
         for planet in planets:
             planet.update_position(planets)
