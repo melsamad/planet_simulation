@@ -4,7 +4,7 @@ import math
 pygame.init()
 
 # setting up pygame window
-width, height = 1000, 800
+width, height = 1500, 800
 window = pygame.display.set_mode((width, height))
 pygame.display.set_caption("Miryam's Expanding Solar System Simulation")
 
@@ -16,6 +16,7 @@ red = (188, 39, 50)
 mustard_yellow = (225, 173, 1)
 grey = (229, 229, 229)
 white = (255, 255, 255)
+orange = (255, 165, 0)
 
 font = pygame.font.SysFont("comicsans", 16) # how to initialize font
 title_font = pygame.font.SysFont("Ariel", 30) # how to initialize font
@@ -27,7 +28,6 @@ class Planet:
 
     AU = 149.6e6 * 1000 # in meters 
     G = 6.67428e-11 
-    SCALE = 200 / AU # not sure if my scale is correct yet I'll do the math later
     TIMESTEP = 3600*4 # one day (in seconds)
 
     def __init__(self, x, y, radius, color, mass, name):
@@ -46,9 +46,9 @@ class Planet:
         self.y_vel = 0
 
     # drawing the planet
-    def draw(self, win): 
-        x = self.x * self.SCALE + width / 2
-        y = self.y * self.SCALE + height / 2
+    def draw(self, win, scale): 
+        x = self.x * scale + width / 2
+        y = self.y * scale + height / 2
 
         title = title_font.render("An Expanding Simulation of our Solar System", 1, white)
         signature = signature_font.render("Amata's Creations", 1, white)
@@ -60,8 +60,8 @@ class Planet:
             updated_points = []
             for point in self.orbit:
                 x, y = point
-                x = x * self.SCALE + width / 2
-                y = y * self.SCALE + height / 2
+                x = x * scale + width / 2
+                y = y * scale + height / 2
                 updated_points.append((x, y))
 
             pygame.draw.lines(win, self.color, False, updated_points, 2) # drawing the orbit
@@ -122,6 +122,18 @@ def main():
     run = True
     clock = pygame.time.Clock()
 
+    scale_pixels = 200
+    sim_scale = scale_pixels / Planet.AU
+
+    # settings icon
+    settings_img = pygame.image.load("settings.png").convert_alpha()
+    settings_img = pygame.transform.scale(settings_img, (50, 50))
+    pygame.draw.circle(settings_img, back_color, (25, 25), 15, 5)
+    icon_rect = settings_img.get_rect(topright=(width - 20, 20))
+
+    display_message = False
+
+
     sun = Planet(0, 0, 40, yellow, 1.98892*10**30, "Sun")
     sun.sun = True
 
@@ -143,11 +155,36 @@ def main():
     lunar_orbital_vel = math.sqrt(Planet.G * 5.974*10**24 / moon_distance)
 
     moon = Planet(-1 * Planet.AU, 0 + moon_distance, 4, grey, 7.342*10**22, "Moon")
-
     moon.x_vel = lunar_orbital_vel
     moon.y_vel = 29.783 * 1000
 
-    planets = [sun, earth, mars, venus, mercury, moon]
+
+    # the gas giants
+    jupiter = Planet(5.2*Planet.AU, 0, 22, orange, 1.89813*10**27 ,"Jupiter")
+    jupiter.y_vel = 13.06 * 1000
+
+    saturn = Planet(9.5*Planet.AU, 0, 22, mustard_yellow, 5.68*10**26 ,"Saturn")
+    saturn.y_vel = 9.69 * 1000
+
+    uranus = Planet(19.2*Planet.AU, 0, 22, blue, 8.68*10**25 ,"Uranus")
+    uranus.y_vel = 6.8 * 1000
+
+    neptune = Planet(30.06*Planet.AU, 0, 22, blue, 1.024*10**26 ,"Neptune")
+    neptune.y_vel = 5.43 * 1000
+
+
+    planets = [
+        sun, 
+        earth, 
+        mars, 
+        venus, 
+        mercury, 
+        moon, 
+        jupiter,
+        saturn,
+        uranus,
+        neptune
+        ]
 
     sub_setps = 3
 
@@ -155,18 +192,47 @@ def main():
     while run:
         clock.tick(60) # 60 frames per second
         window.fill(back_color)
-        
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT: # only event is user quitting the window
                 run = False
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_i:
+                    scale_pixels +=100
+                    print(sim_scale)
+                    print(scale_pixels)
+
+                elif event.key == pygame.K_o:
+                    scale_pixels = max(10, scale_pixels - 100)
+                    print(sim_scale)
+                    print(scale_pixels)
+
+                sim_scale = scale_pixels / Planet.AU
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    if icon_rect.collidepoint(event.pos):
+                        display_message = not display_message
+                        print("works")
 
         for _ in range(sub_setps):
             for planet in planets:
                 planet.update_position(planets)
 
         for planet in planets:
-            planet.update_position(planets)
-            planet.draw(window)
+            planet.draw(window, sim_scale)
+
+        window.blit(settings_img, icon_rect)
+
+
+        if display_message:
+            message = font.render("Press 'I' on your keyboard to Zoom In.\nPress 'O' on your keyboard to Zoom Out.", True, white)
+            message_space = message.get_rect(center=(width // 2, height // 2))
+            pygame.draw.rect(window, back_color, message_space)
+            window.blit(message, message_space)
+            
+
 
         pygame.display.update() # takes drawing actions since last update 
 
