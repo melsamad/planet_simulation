@@ -28,7 +28,7 @@ class Planet:
 
     AU = 149.6e6 * 1000 # in meters 
     G = 6.67428e-11 
-    TIMESTEP = 3600*4 # one day (in seconds)
+    # TIMESTEP = 3600*4 # one day (in seconds)
 
     def __init__(self, x, y, radius, color, mass, name):
         self.x = x
@@ -52,9 +52,10 @@ class Planet:
 
         title = title_font.render("An Expanding Simulation of our Solar System", 1, white)
         signature = signature_font.render("Amata's Creations", 1, white)
+        
 
-        window.blit(title, (width / 3.5, 20))
-        window.blit(signature, (870, height - 30))
+        window.blit(title, (width / 3, 20))
+        window.blit(signature, (width - 120, height - 30))
 
         if len(self.orbit) > 2:
             updated_points = []
@@ -93,7 +94,7 @@ class Planet:
         return x_force, y_force
 
     # make the planets move according to all forces acting upon them
-    def update_position(self, planets):
+    def update_position(self, planets, timescale):
 
         total_fx = total_fy = 0
         for planet in planets:
@@ -104,12 +105,12 @@ class Planet:
             total_fy += fy
 
         # velocity
-        self.x_vel += total_fx / self.mass * self.TIMESTEP 
-        self.y_vel += total_fy / self.mass * self.TIMESTEP
+        self.x_vel += total_fx / self.mass * timescale
+        self.y_vel += total_fy / self.mass * timescale
 
         # distance is updated (v = d / t <=> d = v * t)
-        self.x += self.x_vel * self.TIMESTEP 
-        self.y += self.y_vel * self.TIMESTEP
+        self.x += self.x_vel * timescale
+        self.y += self.y_vel * timescale
         self.orbit.append([self.x, self.y]) # adding a point to orbit list
 
         if len(self.orbit) > 100 and self.name == 'Moon':
@@ -125,11 +126,34 @@ def main():
     scale_pixels = 200
     sim_scale = scale_pixels / Planet.AU
 
+    
+    timescale = 3600
+    timescale_hours = timescale / 3600
+
+
     # settings icon
     settings_img = pygame.image.load("settings.png").convert_alpha()
     settings_img = pygame.transform.scale(settings_img, (50, 50))
     pygame.draw.circle(settings_img, back_color, (25, 25), 15, 5)
     icon_rect = settings_img.get_rect(topright=(width - 20, 20))
+
+    # playing with the time scale icon
+    # add icon
+    add_img = pygame.image.load("add.png").convert_alpha()
+    add_img = pygame.transform.scale(add_img, (60, 60))
+    pygame.draw.circle(add_img, back_color, (25, 25), 15, 5)
+    add_icon = add_img.get_rect(topright=(70, 70))
+
+    # substract icon
+    substract_img = pygame.image.load("substract.png").convert_alpha()
+    substract_img = pygame.transform.scale(substract_img, (60, 60))
+    pygame.draw.circle(substract_img, back_color, (25, 25), 15, 5)
+    substract_icon = substract_img.get_rect(topright=(150, 70))
+
+
+    # space & time scale display
+    space_scale_info = font.render(f"SPACE SCALE: {sim_scale}", 1, white)
+    
 
     display_message = False
 
@@ -190,8 +214,23 @@ def main():
 
 
     while run:
+
+        hours = "hours"
+
         clock.tick(60) # 60 frames per second
         window.fill(back_color)
+        window.blit(space_scale_info, (10, 0))
+
+
+        if timescale_hours > 1.0:
+                hours == "hours"
+        elif timescale_hours == 1.0:
+                hours == "hour"
+                
+        print(hours)
+
+        time_scale_info = font.render(f"TIME SCALE: {timescale_hours} {hours}", 1, white)
+        window.blit(time_scale_info, (10, 20))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT: # only event is user quitting the window
@@ -216,14 +255,26 @@ def main():
                         display_message = not display_message
                         print("works")
 
+                    if add_icon.collidepoint(event.pos):
+                        timescale += 3600
+
+                    timescale_hours = timescale / 3600
+
+                    if substract_icon.collidepoint(event.pos) and timescale > 3600:
+                        timescale -=3600
+
+                    timescale_hours = timescale / 3600
+
         for _ in range(sub_setps):
             for planet in planets:
-                planet.update_position(planets)
+                planet.update_position(planets, timescale)
 
         for planet in planets:
             planet.draw(window, sim_scale)
 
         window.blit(settings_img, icon_rect)
+        window.blit(add_img, add_icon)
+        window.blit(substract_img, substract_icon)
 
 
         if display_message:
@@ -232,7 +283,6 @@ def main():
             pygame.draw.rect(window, back_color, message_space)
             window.blit(message, message_space)
             
-
 
         pygame.display.update() # takes drawing actions since last update 
 
