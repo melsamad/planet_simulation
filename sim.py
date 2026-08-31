@@ -184,7 +184,7 @@ def main():
 
 
     # the gas giants
-    jupiter = Planet(5.2*Planet.AU, 0, 22, orange, 1.89813*10**27 ,"Jupiter")
+    jupiter = Planet(5.2*Planet.AU, 0, 24, orange, 1.89813*10**27 ,"Jupiter")
     jupiter.y_vel = 13.06 * 1000
 
     saturn = Planet(9.5*Planet.AU, 0, 22, mustard_yellow, 5.68*10**26 ,"Saturn")
@@ -195,6 +195,9 @@ def main():
 
     neptune = Planet(30.06*Planet.AU, 0, 22, blue, 1.024*10**26 ,"Neptune")
     neptune.y_vel = 5.43 * 1000
+
+    pluto = Planet(39.5*Planet.AU, 0, 10, grey, 1.30900*10**22 ,"Pluto")
+    pluto.y_vel = 4.74 * 1000
 
 
     planets = [
@@ -207,7 +210,8 @@ def main():
         jupiter,
         saturn,
         uranus,
-        neptune
+        neptune,
+        pluto
         ]
 
     sub_setps = 3
@@ -227,7 +231,7 @@ def main():
         elif timescale_hours == 1.0:
                 hours == "hour"
                 
-        print(hours)
+       
 
         time_scale_info = font.render(f"TIME SCALE: {timescale_hours} {hours}", 1, white)
         window.blit(time_scale_info, (10, 20))
