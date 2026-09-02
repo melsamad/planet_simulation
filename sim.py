@@ -1,5 +1,25 @@
 import pygame
 import math
+from PIL import Image
+import glob
+import os
+
+# 1. Clean ICC Profiles from PNGs before loading them into Pygame
+def clean_icc_profiles():
+    for filename in glob.glob("**/*.png", recursive=True):
+        try:
+            with Image.open(filename) as img:
+                # Remove ICC profile data from image info dictionary
+                info = img.info
+                info.pop("icc_profile", None)
+                
+                # Re-save image without the ICC profile metadata
+                img.save(filename, **info)
+            print(f"Fixed color profile for: {filename}")
+        except Exception as e:
+            print(f"Could not process {filename}: {e}")
+
+clean_icc_profiles()
 
 pygame.init()
 
@@ -22,6 +42,17 @@ font = pygame.font.SysFont("comicsans", 16) # how to initialize font
 title_font = pygame.font.SysFont("Ariel", 30) # how to initialize font
 signature_font = pygame.font.SysFont("comicsans", 12) # how to initialize font
 
+planet_images = [
+    "planets/earth.png",
+    "planets/jupiter.png",
+    "planets/mars.png",
+    "planets/mercury.png",
+    "planets/neptune.png",
+    "planets/saturn.png",
+    "planets/uranus.png",
+    "planets/venus.png"
+]
+
 
 # let's put some planets
 class Planet:
@@ -30,13 +61,15 @@ class Planet:
     G = 6.67428e-11 
     # TIMESTEP = 3600*4 # one day (in seconds)
 
-    def __init__(self, x, y, radius, color, mass, name):
+    def __init__(self, x, y, radius, color, mass, name, image):
         self.x = x
         self.y = y
         self.radius = radius
         self.color = color
         self.mass = mass
         self.name = name
+        self.image = image
+        self.is_imaged = False
 
         self.orbit = []
         self.sun = False
@@ -44,6 +77,19 @@ class Planet:
 
         self.x_vel = 0
         self.y_vel = 0
+
+        if self.is_imaged and os.path.exists(self.image):
+            try:
+                # Diameter = radius * 2
+                diameter = self.radius * 2
+                loaded_img = pygame.image.load(self.image_path).convert_alpha()
+                loaded_img = pygame.transform.scale(loaded_img, (diameter, diameter))
+            except Exception as e:
+                print(f"Failed to load image for {self.name}: {e}")
+                self.is_imaged = False
+        else:
+            self.is_imaged = False
+
 
     # drawing the planet
     def draw(self, win, scale): 
@@ -67,8 +113,22 @@ class Planet:
 
             pygame.draw.lines(win, self.color, False, updated_points, 2) # drawing the orbit
 
-        pygame.draw.circle(win, self.color, (x, y), self.radius) # how we tell our program to draw a circle
-
+        if self.is_imaged and os.path.exists(self.image):
+            try:
+                # Diameter = radius * 2
+                diameter = self.radius * 2
+                loaded_img = pygame.image.load(self.image).convert_alpha()
+                loaded_img = pygame.transform.scale(loaded_img, (diameter, diameter))
+                # Get rect centered on the planet's calculated position (x, y)
+                rect = loaded_img.get_rect(center=(x, y))
+                window.blit(loaded_img, rect)
+            except Exception as e:
+                print(f"Failed to load image for {self.name}: {e}")
+                self.is_imaged = False
+            else:
+                # Fallback to colored circle if no image is available
+                pygame.draw.circle(win, self.color, (x, y), self.radius)
+            
         if not self.sun:
             distance_text = font.render(self.name, 1, white)
             window.blit(distance_text, (x - distance_text.get_width()/2, y - distance_text.get_height()/2))
@@ -158,46 +218,58 @@ def main():
     display_message = False
 
 
-    sun = Planet(0, 0, 40, yellow, 1.98892*10**30, "Sun")
+    sun = Planet(0, 0, 40, yellow, 1.98892*10**30, "Sun", "planets/earth.png")
     sun.sun = True
+    sun.is_imaged = False
 
     # planets & their velocities
-    mercury = Planet(0.387*Planet.AU, 0, 12, grey, 3.30104*10**23, "Mercury")
+    mercury = Planet(0.387*Planet.AU, 0, 12, grey, 3.30104*10**23, "Mercury", "planets/mercury.png")
     mercury.y_vel = -47.4 * 1000
+    mercury.is_imaged = True
 
-    venus = Planet(-0.72*Planet.AU, 0, 14, mustard_yellow, 4.86732*10**24, "Venus")
+    venus = Planet(-0.72*Planet.AU, 0, 14, mustard_yellow, 4.86732*10**24, "Venus", "planets/venus.png")
     venus.y_vel = -35.02 * 1000
+    venus.is_imaged = True
 
-    earth = Planet(-1*Planet.AU, 0, 16, blue, 5.974*10**24, "Earth")
+    earth = Planet(-1*Planet.AU, 0, 16, blue, 5.974*10**24, "Earth", "planets/earth.png")
     earth.y_vel = 29.783 * 1000
+    earth.is_imaged = True
 
-    mars = Planet(1.52*Planet.AU, 0, 13, red, 6.41693*10**23, "Mars")
+    mars = Planet(1.52*Planet.AU, 0, 13, red, 6.41693*10**23, "Mars", "planets/mars.png")
     mars.y_vel = 24.077 * 1000
+    mars.is_imaged = True
 
     # initializing Earth's Moon
     moon_distance = 0.09 * Planet.AU
     lunar_orbital_vel = math.sqrt(Planet.G * 5.974*10**24 / moon_distance)
 
-    moon = Planet(-1 * Planet.AU, 0 + moon_distance, 4, grey, 7.342*10**22, "Moon")
+
+    moon = Planet(-1 * Planet.AU, 0 + moon_distance, 4, grey, 7.342*10**22, "Moon", "planets/earth.png")
     moon.x_vel = lunar_orbital_vel
     moon.y_vel = 29.783 * 1000
+    moon.is_imaged = True
 
 
     # the gas giants
-    jupiter = Planet(5.2*Planet.AU, 0, 24, orange, 1.89813*10**27 ,"Jupiter")
+    jupiter = Planet(5.2*Planet.AU, 0, 24, orange, 1.89813*10**27 ,"Jupiter", "planets/jupiter.png")
     jupiter.y_vel = 13.06 * 1000
+    jupiter.is_imaged = True
 
-    saturn = Planet(9.5*Planet.AU, 0, 22, mustard_yellow, 5.68*10**26 ,"Saturn")
+    saturn = Planet(9.5*Planet.AU, 0, 22, mustard_yellow, 5.68*10**26 ,"Saturn", "planets/saturn.png")
     saturn.y_vel = 9.69 * 1000
+    saturn.is_imaged = True
 
-    uranus = Planet(19.2*Planet.AU, 0, 22, blue, 8.68*10**25 ,"Uranus")
+    uranus = Planet(19.2*Planet.AU, 0, 22, blue, 8.68*10**25 ,"Uranus", "planets/uranus.png")
     uranus.y_vel = 6.8 * 1000
+    uranus.is_imaged = True
 
-    neptune = Planet(30.06*Planet.AU, 0, 22, blue, 1.024*10**26 ,"Neptune")
+    neptune = Planet(30.06*Planet.AU, 0, 22, blue, 1.024*10**26 ,"Neptune", "planets/neptune.png")
     neptune.y_vel = 5.43 * 1000
+    neptune.is_imaged = True
 
-    pluto = Planet(39.5*Planet.AU, 0, 10, grey, 1.30900*10**22 ,"Pluto")
+    pluto = Planet(39.5*Planet.AU, 0, 10, grey, 1.30900*10**22 ,"Pluto", "planets/earth.png")
     pluto.y_vel = 4.74 * 1000
+    pluto.is_imaged = False
 
 
     planets = [
