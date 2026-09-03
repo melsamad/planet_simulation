@@ -5,32 +5,9 @@ import glob
 import os
 import requests
 from dotenv import load_dotenv
-
-
-
-
-def get_planet_info(planet):
-
-    load_dotenv()
-
-    api_key = os.getenv('OPENDATA_API_KEY')
-
-    headers = {
-        'Authorization': f'Bearer {api_key}'
-    }
-
-    #params = {}
-
-    response = requests.get(f'https://api.le-systeme-solaire.net/rest/bodies/{planet}', headers=headers)
-    
-    if response.status_code == 200:
-        data = response.json()
-        print(data)
-    else:
-        print(response.status_code)
     
 
-# 1. Clean ICC Profiles from PNGs before loading them into Pygame
+# Clean ICC Profiles from PNGs before loading them into Pygame
 def clean_icc_profiles():
     for filename in glob.glob("**/*.png", recursive=True):
         try:
@@ -78,6 +55,40 @@ planet_images = [
     "planets/uranus.png",
     "planets/venus.png"
 ]
+
+def get_planet_info(planet):
+
+    load_dotenv()
+
+    api_key = os.getenv('OPENDATA_API_KEY')
+
+    headers = {
+        'Authorization': f'Bearer {api_key}'
+    }
+
+    line_space = 1
+
+    response = requests.get(f'https://api.le-systeme-solaire.net/rest/bodies/{planet}', headers=headers)
+    
+    if response.status_code == 200:
+        data = response.json()
+        infos = [
+            f"Object Name: {planet}",
+            f"Type: {data['bodyType']}",
+            f"Average Temperature: {data['avgTemp']}K",
+            f"Inclination: {data['inclination']}",
+            f"Axial Tilt: {data['axialTilt']}",
+        ]
+
+        for info in infos:
+            line_space += 20
+            info_message = title_font.render(info, True, back_color)
+            info_space = info_message.get_rect(center=(width // 2, 350 + line_space))
+            pygame.draw.rect(window, white, info_space)
+            window.blit(info_message, info_space)
+
+    else:
+        print(response.status_code)
 
 
 # let's put some planets
@@ -218,21 +229,24 @@ def main():
     # settings icon
     settings_img = pygame.image.load("settings.png").convert_alpha()
     settings_img = pygame.transform.scale(settings_img, (50, 50))
-    pygame.draw.circle(settings_img, back_color, (25, 25), 15, 5)
     icon_rect = settings_img.get_rect(topright=(width - 20, 20))
 
     # playing with the time scale icon
     # add icon
     add_img = pygame.image.load("add.png").convert_alpha()
     add_img = pygame.transform.scale(add_img, (60, 60))
-    pygame.draw.circle(add_img, back_color, (25, 25), 15, 5)
     add_icon = add_img.get_rect(topright=(70, 70))
 
     # substract icon
     substract_img = pygame.image.load("substract.png").convert_alpha()
     substract_img = pygame.transform.scale(substract_img, (60, 60))
-    pygame.draw.circle(substract_img, back_color, (25, 25), 15, 5)
     substract_icon = substract_img.get_rect(topright=(150, 70))
+
+    # remove icon for object info
+    remove_img = pygame.image.load("remove.png").convert_alpha()
+    remove_img = pygame.transform.scale(remove_img, (40, 40))
+    remove_icon = remove_img.get_rect(topright=(1000, 250))
+    window.blit(remove_img, remove_icon)
 
 
     # space & time scale display
@@ -310,6 +324,9 @@ def main():
 
     sub_setps = 3
 
+    is_info_displayed = False
+    which_object = ""
+
 
     while run:
 
@@ -376,8 +393,17 @@ def main():
                         rect = object.loaded_img.get_rect(center=(screen_x, screen_y))
                         print(object.x, object.y)
                         if rect.collidepoint(event.pos):
-                            get_planet_info(object.name)
+                            is_info_displayed = True
+                            which_object = object.name
 
+                    if remove_icon.collidepoint(event.pos):
+                        is_info_displayed = not is_info_displayed
+
+                    
+        if is_info_displayed: 
+            get_planet_info(which_object)
+            window.blit(remove_img, remove_icon)    
+                            
 
         window.blit(settings_img, icon_rect)
         window.blit(add_img, add_icon)
