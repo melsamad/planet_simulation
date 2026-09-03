@@ -3,6 +3,32 @@ import math
 from PIL import Image
 import glob
 import os
+import requests
+from dotenv import load_dotenv
+
+
+
+
+def get_planet_info(planet):
+
+    load_dotenv()
+
+    api_key = os.getenv('OPENDATA_API_KEY')
+
+    headers = {
+        'Authorization': f'Bearer {api_key}'
+    }
+
+    #params = {}
+
+    response = requests.get(f'https://api.le-systeme-solaire.net/rest/bodies/{planet}', headers=headers)
+    
+    if response.status_code == 200:
+        data = response.json()
+        print(data)
+    else:
+        print(response.status_code)
+    
 
 # 1. Clean ICC Profiles from PNGs before loading them into Pygame
 def clean_icc_profiles():
@@ -69,7 +95,7 @@ class Planet:
         self.mass = mass
         self.name = name
         self.image = image
-        self.is_imaged = False
+        self.is_imaged = True
 
         self.orbit = []
         self.sun = False
@@ -78,17 +104,23 @@ class Planet:
         self.x_vel = 0
         self.y_vel = 0
 
+        self.loaded_img = None
+
         if self.is_imaged and os.path.exists(self.image):
-            try:
+            try: 
+                img = pygame.image.load(self.image).convert_alpha()
                 # Diameter = radius * 2
                 diameter = self.radius * 2
-                loaded_img = pygame.image.load(self.image_path).convert_alpha()
-                loaded_img = pygame.transform.scale(loaded_img, (diameter, diameter))
+                self.loaded_img = pygame.transform.scale(img, (diameter, diameter))
             except Exception as e:
                 print(f"Failed to load image for {self.name}: {e}")
                 self.is_imaged = False
+                self.loaded_img = None
         else:
             self.is_imaged = False
+            self.loaded_img = None
+
+        
 
 
     # drawing the planet
@@ -98,8 +130,8 @@ class Planet:
 
         title = title_font.render("An Expanding Simulation of our Solar System", 1, white)
         signature = signature_font.render("Amata's Creations", 1, white)
-        
 
+        
         window.blit(title, (width / 3, 20))
         window.blit(signature, (width - 120, height - 30))
 
@@ -113,25 +145,17 @@ class Planet:
 
             pygame.draw.lines(win, self.color, False, updated_points, 2) # drawing the orbit
 
-        if self.is_imaged and os.path.exists(self.image):
-            try:
-                # Diameter = radius * 2
-                diameter = self.radius * 2
-                loaded_img = pygame.image.load(self.image).convert_alpha()
-                loaded_img = pygame.transform.scale(loaded_img, (diameter, diameter))
-                # Get rect centered on the planet's calculated position (x, y)
-                rect = loaded_img.get_rect(center=(x, y))
-                window.blit(loaded_img, rect)
-            except Exception as e:
-                print(f"Failed to load image for {self.name}: {e}")
-                self.is_imaged = False
-            else:
-                # Fallback to colored circle if no image is available
-                pygame.draw.circle(win, self.color, (x, y), self.radius)
+        if self.is_imaged and os.path.exists(self.image) and self.loaded_img is not None:
+           rect = self.loaded_img.get_rect(center=(x, y)) # coordinates of the planets as they're moving
+           window.blit(self.loaded_img, rect)
+
+        else:
+            pygame.draw.circle(window, self.color, (x, y), self.radius)
             
         if not self.sun:
             distance_text = font.render(self.name, 1, white)
             window.blit(distance_text, (x - distance_text.get_width()/2, y - distance_text.get_height()/2))
+
 
 
     def attraction(self, other):
@@ -218,26 +242,25 @@ def main():
     display_message = False
 
 
-    sun = Planet(0, 0, 40, yellow, 1.98892*10**30, "Sun", "planets/earth.png")
+    sun = Planet(0, 0, 70, yellow, 1.98892*10**30, "Sun", "planets/sun.png")
     sun.sun = True
-    sun.is_imaged = False
 
     # planets & their velocities
     mercury = Planet(0.387*Planet.AU, 0, 12, grey, 3.30104*10**23, "Mercury", "planets/mercury.png")
     mercury.y_vel = -47.4 * 1000
-    mercury.is_imaged = True
+   
 
     venus = Planet(-0.72*Planet.AU, 0, 14, mustard_yellow, 4.86732*10**24, "Venus", "planets/venus.png")
     venus.y_vel = -35.02 * 1000
-    venus.is_imaged = True
+    
 
     earth = Planet(-1*Planet.AU, 0, 16, blue, 5.974*10**24, "Earth", "planets/earth.png")
     earth.y_vel = 29.783 * 1000
-    earth.is_imaged = True
+    
 
     mars = Planet(1.52*Planet.AU, 0, 13, red, 6.41693*10**23, "Mars", "planets/mars.png")
     mars.y_vel = 24.077 * 1000
-    mars.is_imaged = True
+    
 
     # initializing Earth's Moon
     moon_distance = 0.09 * Planet.AU
@@ -247,29 +270,28 @@ def main():
     moon = Planet(-1 * Planet.AU, 0 + moon_distance, 4, grey, 7.342*10**22, "Moon", "planets/earth.png")
     moon.x_vel = lunar_orbital_vel
     moon.y_vel = 29.783 * 1000
-    moon.is_imaged = True
-
+    
 
     # the gas giants
     jupiter = Planet(5.2*Planet.AU, 0, 24, orange, 1.89813*10**27 ,"Jupiter", "planets/jupiter.png")
     jupiter.y_vel = 13.06 * 1000
-    jupiter.is_imaged = True
+    
 
     saturn = Planet(9.5*Planet.AU, 0, 22, mustard_yellow, 5.68*10**26 ,"Saturn", "planets/saturn.png")
     saturn.y_vel = 9.69 * 1000
-    saturn.is_imaged = True
+    
 
     uranus = Planet(19.2*Planet.AU, 0, 22, blue, 8.68*10**25 ,"Uranus", "planets/uranus.png")
     uranus.y_vel = 6.8 * 1000
-    uranus.is_imaged = True
+   
 
     neptune = Planet(30.06*Planet.AU, 0, 22, blue, 1.024*10**26 ,"Neptune", "planets/neptune.png")
     neptune.y_vel = 5.43 * 1000
-    neptune.is_imaged = True
+    
 
-    pluto = Planet(39.5*Planet.AU, 0, 10, grey, 1.30900*10**22 ,"Pluto", "planets/earth.png")
+    pluto = Planet(39.5*Planet.AU, 0, 10, grey, 1.30900*10**22 ,"Pluto", "planets/pluto.png")
     pluto.y_vel = 4.74 * 1000
-    pluto.is_imaged = False
+    
 
 
     planets = [
@@ -299,14 +321,21 @@ def main():
 
 
         if timescale_hours > 1.0:
-                hours == "hours"
+                hours = "hours"
         elif timescale_hours == 1.0:
-                hours == "hour"
+                hours = "hour"
                 
-       
 
         time_scale_info = font.render(f"TIME SCALE: {timescale_hours} {hours}", 1, white)
         window.blit(time_scale_info, (10, 20))
+
+        for _ in range(sub_setps):
+            for planet in planets:
+                planet.update_position(planets, timescale)
+                       
+        for planet in planets:
+            planet.draw(window, sim_scale)
+
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT: # only event is user quitting the window
@@ -341,12 +370,14 @@ def main():
 
                     timescale_hours = timescale / 3600
 
-        for _ in range(sub_setps):
-            for planet in planets:
-                planet.update_position(planets, timescale)
+                    for object in planets:
+                        screen_x = int(width / 2 + object.x * sim_scale)
+                        screen_y = int(height / 2 + object.y * sim_scale) 
+                        rect = object.loaded_img.get_rect(center=(screen_x, screen_y))
+                        print(object.x, object.y)
+                        if rect.collidepoint(event.pos):
+                            get_planet_info(object.name)
 
-        for planet in planets:
-            planet.draw(window, sim_scale)
 
         window.blit(settings_img, icon_rect)
         window.blit(add_img, add_icon)
