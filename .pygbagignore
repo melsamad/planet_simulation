@@ -1,0 +1,7 @@
+build/
+docs/
+.git/
+.vscode/
+web-cache/
+*.tar.gz
+*.apk
