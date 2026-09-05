@@ -27,6 +27,6 @@ cd planet_simulator
 ## How it works 
 
 ## Credits / Acknowledgements
-[Planet Simulation Tutorial in Python using Pygame - Tech with Tim](https://www.youtube.com/watch?v=WTLPmUHTPqo&t=1s)
-[Open Exoplanet Catalogue](https://openexoplanetcatalogue.com/)
-[The Solar System OpenData](https://api.le-systeme-solaire.net/en/)
+- [Planet Simulation Tutorial in Python using Pygame - Tech with Tim](https://www.youtube.com/watch?v=WTLPmUHTPqo&t=1s)
+- [Open Exoplanet Catalogue](https://openexoplanetcatalogue.com/)
+- [The Solar System OpenData](https://api.le-systeme-solaire.net/en/)
