@@ -1,4 +1,4 @@
-# planet_simulation
+# Solar System Simulation Catalogue
 A simulation of ours and all currently known solar systems in the Universe using NASA's Exoplanet archive and OpenData Solar System API with space and time scales control.
 
 <img width="1679" height="892" alt="Screenshot 2026-09-05 at 1 51 29 PM" src="https://github.com/user-attachments/assets/bc118030-d27e-4c71-8242-94fc7764fc3e" />
