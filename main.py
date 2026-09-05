@@ -1,31 +1,17 @@
 import pygame
 import math
-from PIL import Image
-import glob
 import os
-import exoplanet
 import asyncio
 import json
 import sys
+import exoplanet
     
 
-# Clean ICC Profiles from PNGs before loading them into Pygame
-def clean_icc_profiles():
-    for filename in glob.glob("**/*.png", recursive=True):
-        try:
-            with Image.open(filename) as img:
-                # Remove ICC profile data from image info dictionary
-                info = img.info
-                info.pop("icc_profile", None)
-                
-                # Re-save image without the ICC profile metadata
-                img.save(filename, **info)
-            print(f"Fixed color profile for: {filename}")
-        except Exception as e:
-            print(f"Could not process {filename}: {e}")
-
-clean_icc_profiles()
-
+# setting up pygame window
+width, height = 1500, 800
+pygame.init()
+window = pygame.display.set_mode((width, height))
+pygame.display.set_caption("Miryam's Expanding Solar System Simulation")
 
 back_color = (20, 20, 40) # dark blue color
 yellow = (255, 255, 0)
@@ -250,11 +236,6 @@ class Planet:
 # pygame event loop
 async def main():
 
-    # setting up pygame window
-    width, height = 1500, 800
-    pygame.init()
-    window = pygame.display.set_mode((width, height))
-    pygame.display.set_caption("Miryam's Expanding Solar System Simulation")
     run = True
     clock = pygame.time.Clock()
 
@@ -262,7 +243,7 @@ async def main():
     sim_scale = scale_pixels / Planet.AU
 
     # fonts
-    font = pygame.font.Font(None, 16) # how to initialize font
+    font = pygame.font.Font(None, 22) # how to initialize font
     title_font = pygame.font.Font(None, 30) # how to initialize font
     signature_font = pygame.font.Font(None, 12) # how to initialize font
     

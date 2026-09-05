@@ -28,9 +28,9 @@ def fetch_and_display_data():
         # tree = ET.parse(gz_file)
         # root = tree.getroot()
 
-    with gzip.open("systems.xml", "rb") as gz_file:
-        tree = ET.parse("systems.xml")
-        root = tree.getroot()
+    
+    tree = ET.parse("systems.xml")
+    root = tree.getroot()
 
     systems = []
 
@@ -208,7 +208,7 @@ async def open_simulation(system_data, width, height, title_font, font, sim_wind
         title_surf = title_font.render(system_data["name"], True, white)
         sim_window.blit(title_surf, (20, 20))
 
-        hud_text = f"Zoom: 'I' / 'O' | Speed: UP / DOWN Arrow | Press 'ESC' to return"
+        hud_text = f"Zoom: 'I' / 'O' | Speed (Timescale): UP / DOWN Arrow | Press 'ESC' to return"
         hud_surf = font.render(hud_text, True, gray)
         sim_window.blit(hud_surf, (20, 60))
 
