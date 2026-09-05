@@ -453,7 +453,7 @@ async def main():
                         current_state = "EXOPLANET_SIM"
 
         if current_state == "EXOPLANET_SIM":
-            next_state = await exoplanet.main_exoplanet()
+            next_state = await exoplanet.main_exoplanet(window)
 
             if next_state == "MAIN_MENU":
                 current_state = "MAIN_MENU"

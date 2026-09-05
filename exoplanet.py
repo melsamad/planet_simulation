@@ -223,19 +223,18 @@ async def open_simulation(system_data, width, height, title_font, font, sim_wind
 
 
 
-async def main_exoplanet():
+async def main_exoplanet(window):
 
-    #initializing
-    pygame.init()
+    
     # fonts
     font = pygame.font.Font(None, 16) # how to initialize font
     search_font = pygame.font.Font(None, 22)
     title_font = pygame.font.Font(None, 28)
     # setting up pygame window
     width, height = 1500, 800
-    window = pygame.display.set_mode((width, height))
-    sim_window = pygame.display.set_mode((width, height))
-    pygame.display.set_caption("Explore all known Solar Systems")
+    #window = pygame.display.set_mode((width, height))
+    #sim_window = pygame.display.set_mode((width, height))
+    #pygame.display.set_caption("Explore all known Solar Systems")
     all_systems = fetch_and_display_data()
     filtered_systems = all_systems.copy()
 
